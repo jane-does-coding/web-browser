@@ -5,118 +5,147 @@ from PyQt5.QtWebEngineWidgets import *
 import json
 import os
 
-class MyWebBrowser():
+class BookmarkDelegate(QStyledItemDelegate):
+    def __init__(self, parent=None):
+        super(BookmarkDelegate, self).__init__(parent)
 
+    def paint(self, painter, option, index):
+        painter.save()
+
+        rect = option.rect.adjusted(0, 5, 0, -5)  # Adding top and bottom space
+        painter.setRenderHint(QPainter.Antialiasing, True)
+
+        text = index.data(Qt.DisplayRole)
+
+        painter.setBrush(QColor("#2c2c2c"))
+        painter.setPen(Qt.NoPen)
+        painter.drawRoundedRect(rect, 5, 5)
+
+        painter.setPen(QColor("#ffffff"))
+        font = QFont()
+        font.setPointSize(12)
+        painter.setFont(font)
+        painter.drawText(rect.adjusted(10, 0, 0, 0), Qt.AlignVCenter | Qt.AlignLeft, text)
+
+        painter.restore()
+
+    def sizeHint(self, option, index):
+        return QSize(option.rect.width(), 50)  # Increased size for space
+
+class BookmarkItemWidget(QWidget):
+    def __init__(self, text, parent=None):
+        super(BookmarkItemWidget, self).__init__(parent)
+        layout = QVBoxLayout()
+        self.label = QLabel(text)
+        self.label.setStyleSheet("color: white; background-color: #2c2c2c; padding: 10px; border-radius: 5px;")
+        layout.addWidget(self.label)
+        layout.setContentsMargins(0, 5, 0, 5)  # Add spacing between items
+        self.setLayout(layout)
+
+class MyWebBrowser():
     def __init__(self):
         self.window = QWidget()
         self.window.setWindowTitle("Woah My Web Browser")
-        self.window.setStyleSheet("background-color: #171717;")  # Set background color
+        self.window.setStyleSheet("background-color: #171717;")
 
         self.layout = QVBoxLayout()
         self.horizontal = QHBoxLayout()
 
-        # Create and style the URL bar with autocomplete
         self.url_bar = QLineEdit()
         self.url_bar.setMaximumHeight(30)
         self.url_bar.setStyleSheet("""
             QLineEdit {
-                background-color: #F0F0F0; /* Light grey background */
-                color: #333333; /* Dark text color */
-                font-size: 16px; /* Text size */
-                border: 1px solid #CCCCCC; /* Border color */
-                border-radius: 5px; /* Rounded corners */
-                padding: 5px; /* Padding inside the text box */
+                background-color: #F0F0F0;
+                color: #333333;
+                font-size: 16px;
+                border: 1px solid #CCCCCC;
+                border-radius: 5px;
+                padding: 5px;
             }
         """)
 
-        # Create a completer for autocomplete suggestions
         self.completer = QCompleter()
         self.completion_model = QStringListModel()
         self.completer.setModel(self.completion_model)
         self.url_bar.setCompleter(self.completer)
 
-        # Create and style the "Go" button
         self.go_btn = QPushButton("Go")
         self.go_btn.setMinimumHeight(30)
         self.go_btn.setStyleSheet("""
             QPushButton {
-                background-color: #27272a; /* Green background */
-                color: white; /* White text */
-                font-size: 16px; /* Text size */
-                border: none; /* No border */
-                border-radius: 5px; /* Rounded corners */
-                padding: 5px; /* Padding */
+                background-color: #27272a;
+                color: white;
+                font-size: 16px;
+                border: none;
+                border-radius: 5px;
+                padding: 5px;
             }
             QPushButton:hover {
-                background-color: #45A049; /* Darker green on hover */
+                background-color: #404040;
             }
         """)
 
-        # Create and style the "Back" button
         self.back_btn = QPushButton("<")
         self.back_btn.setMinimumHeight(30)
         self.back_btn.setStyleSheet("""
             QPushButton {
-                background-color: #27272a; /* Blue background */
-                color: white; /* White text */
-                font-size: 16px; /* Text size */
-                border: none; /* No border */
-                border-radius: 5px; /* Rounded corners */
-                padding: 5px 10px; /* Padding */
+                background-color: #27272a;
+                color: white;
+                font-size: 16px;
+                border: none;
+                border-radius: 5px;
+                padding: 5px 10px;
             }
             QPushButton:hover {
-                background-color: #1976D2; /* Darker blue on hover */
+                background-color: #404040;
             }
         """)
 
-        # Create and style the "Forward" button
         self.forward_btn = QPushButton(">")
         self.forward_btn.setMinimumHeight(30)
         self.forward_btn.setStyleSheet("""
             QPushButton {
-                background-color: #27272a; /* Orange background */
-                color: white; /* White text */
-                font-size: 16px; /* Text size */
-                border: none; /* No border */
-                border-radius: 5px; /* Rounded corners */
-                padding: 5px 10px; /* Padding */
+                background-color: #27272a;
+                color: white;
+                font-size: 16px;
+                border: none;
+                border-radius: 5px;
+                padding: 5px 10px;
             }
             QPushButton:hover {
-                background-color: #FB8C00; /* Darker orange on hover */
+                background-color: #404040;
             }
         """)
 
-        # Create and style the "Bookmark" button
         self.bookmark_btn = QPushButton("Bookmark")
         self.bookmark_btn.setMinimumHeight(30)
         self.bookmark_btn.setStyleSheet("""
             QPushButton {
-                background-color: #27272a; /* Orange background */
-                color: white; /* White text */
-                font-size: 16px; /* Text size */
-                border: none; /* No border */
-                border-radius: 5px; /* Rounded corners */
-                padding: 5px 10px; /* Padding */
+                background-color: #27272a;
+                color: white;
+                font-size: 16px;
+                border: none;
+                border-radius: 5px;
+                padding: 5px 10px;
             }
             QPushButton:hover {
-                background-color: #FF9800; /* Darker orange on hover */
+                background-color: #404040;
             }
         """)
 
-        # Create and style the "Remove Bookmark" button
         self.remove_bookmark_btn = QPushButton("Remove Bookmark")
         self.remove_bookmark_btn.setMinimumHeight(30)
         self.remove_bookmark_btn.setStyleSheet("""
             QPushButton {
-                background-color: #27272a; /* Red background */
-                color: white; /* White text */
-                font-size: 16px; /* Text size */
-                border: none; /* No border */
-                border-radius: 5px; /* Rounded corners */
-                padding: 5px 10px; /* Padding */
+                background-color: #27272a;
+                color: white;
+                font-size: 16px;
+                border: none;
+                border-radius: 5px;
+                padding: 5px 10px;
             }
             QPushButton:hover {
-                background-color: #E53935; /* Darker red on hover */
+                background-color: #404040;
             }
         """)
 
@@ -127,17 +156,17 @@ class MyWebBrowser():
         self.horizontal.addWidget(self.bookmark_btn)
         self.horizontal.addWidget(self.remove_bookmark_btn)
 
-        # Create and style the bookmarks list
         self.bookmarks_list = QListWidget()
         self.bookmarks_list.setMaximumHeight(150)
+        self.bookmarks_list.setItemDelegate(BookmarkDelegate(self.bookmarks_list))
         self.bookmarks_list.setStyleSheet("""
             QListWidget {
-                background-color: #F0F0F0; /* Light grey background */
-                color: #333333; /* Dark text color */
-                font-size: 16px; /* Text size */
-                border: 1px solid #CCCCCC; /* Border color */
-                border-radius: 5px; /* Rounded corners */
-                padding: 5px; /* Padding */
+                background-color: #0a0a0a;
+                color: white;
+                font-size: 16px;
+                border: 1px solid #0a0a0a;
+                border-radius: 10px;
+                padding: 10px;
             }
         """)
 
@@ -157,12 +186,11 @@ class MyWebBrowser():
         self.browser.setUrl(QUrl("http://google.com"))
 
         self.window.setLayout(self.layout)
-        self.window.resize(800, 600)  # Set initial window size
+        self.window.resize(800, 600)
         self.window.show()
 
         self.load_bookmarks()
 
-        # Connect textChanged signal of QLineEdit to update autocomplete suggestions
         self.url_bar.textChanged.connect(self.update_autocomplete)
 
     def navigate(self, url):
@@ -170,11 +198,16 @@ class MyWebBrowser():
             url = "http://" + url
             self.url_bar.setText(url)
         self.browser.setUrl(QUrl(url))
-        self.url_bar.clearFocus()  # Clear focus after navigating
+        self.url_bar.clearFocus()
 
     def add_bookmark(self):
         current_url = self.browser.url().toString()
-        self.bookmarks_list.addItem(current_url)
+        item_widget = BookmarkItemWidget(current_url)
+        list_item = QListWidgetItem(self.bookmarks_list)
+        list_item.setSizeHint(item_widget.sizeHint())
+
+        self.bookmarks_list.addItem(list_item)
+        self.bookmarks_list.setItemWidget(list_item, item_widget)
         self.save_bookmarks()
 
     def load_bookmark(self, item):
@@ -191,7 +224,9 @@ class MyWebBrowser():
     def save_bookmarks(self):
         bookmarks = []
         for index in range(self.bookmarks_list.count()):
-            bookmarks.append(self.bookmarks_list.item(index).text())
+            item = self.bookmarks_list.item(index)
+            widget = self.bookmarks_list.itemWidget(item)
+            bookmarks.append(widget.label.text())
         with open("bookmarks.json", "w") as file:
             json.dump(bookmarks, file)
 
@@ -200,11 +235,14 @@ class MyWebBrowser():
             with open("bookmarks.json", "r") as file:
                 bookmarks = json.load(file)
                 for bookmark in bookmarks:
-                    self.bookmarks_list.addItem(bookmark)
+                    item_widget = BookmarkItemWidget(bookmark)
+                    list_item = QListWidgetItem(self.bookmarks_list)
+                    list_item.setSizeHint(item_widget.sizeHint())
+
+                    self.bookmarks_list.addItem(list_item)
+                    self.bookmarks_list.setItemWidget(list_item, item_widget)
 
     def update_autocomplete(self, text):
-        # Implement logic to update autocomplete suggestions based on 'text'
-        # Here's a simple example where suggestions are hardcoded for demonstration
         suggestions = ["linkedin.com", "gmail.com", "youtube.com"]
         self.completion_model.setStringList(suggestions)
 
