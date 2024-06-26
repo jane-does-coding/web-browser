@@ -10,6 +10,7 @@ class MyWebBrowser():
     def __init__(self):
         self.window = QWidget()
         self.window.setWindowTitle("Woah My Web Browser")
+        self.window.setStyleSheet("background-color: #171717;")  # Set background color
 
         self.layout = QVBoxLayout()
         self.horizontal = QHBoxLayout()
@@ -39,7 +40,7 @@ class MyWebBrowser():
         self.go_btn.setMinimumHeight(30)
         self.go_btn.setStyleSheet("""
             QPushButton {
-                background-color: #6172f2; /* Green background */
+                background-color: #27272a; /* Green background */
                 color: white; /* White text */
                 font-size: 16px; /* Text size */
                 border: none; /* No border */
@@ -56,7 +57,7 @@ class MyWebBrowser():
         self.back_btn.setMinimumHeight(30)
         self.back_btn.setStyleSheet("""
             QPushButton {
-                background-color: #6172f2; /* Blue background */
+                background-color: #27272a; /* Blue background */
                 color: white; /* White text */
                 font-size: 16px; /* Text size */
                 border: none; /* No border */
@@ -73,7 +74,7 @@ class MyWebBrowser():
         self.forward_btn.setMinimumHeight(30)
         self.forward_btn.setStyleSheet("""
             QPushButton {
-                background-color: #6172f2; /* Orange background */
+                background-color: #27272a; /* Orange background */
                 color: white; /* White text */
                 font-size: 16px; /* Text size */
                 border: none; /* No border */
@@ -90,7 +91,7 @@ class MyWebBrowser():
         self.bookmark_btn.setMinimumHeight(30)
         self.bookmark_btn.setStyleSheet("""
             QPushButton {
-                background-color: #FFB74D; /* Orange background */
+                background-color: #27272a; /* Orange background */
                 color: white; /* White text */
                 font-size: 16px; /* Text size */
                 border: none; /* No border */
@@ -107,7 +108,7 @@ class MyWebBrowser():
         self.remove_bookmark_btn.setMinimumHeight(30)
         self.remove_bookmark_btn.setStyleSheet("""
             QPushButton {
-                background-color: #EF5350; /* Red background */
+                background-color: #27272a; /* Red background */
                 color: white; /* White text */
                 font-size: 16px; /* Text size */
                 border: none; /* No border */
@@ -156,6 +157,7 @@ class MyWebBrowser():
         self.browser.setUrl(QUrl("http://google.com"))
 
         self.window.setLayout(self.layout)
+        self.window.resize(800, 600)  # Set initial window size
         self.window.show()
 
         self.load_bookmarks()
@@ -203,7 +205,7 @@ class MyWebBrowser():
     def update_autocomplete(self, text):
         # Implement logic to update autocomplete suggestions based on 'text'
         # Here's a simple example where suggestions are hardcoded for demonstration
-        suggestions = ["http://example.com", "http://example.org", "http://google.com"]
+        suggestions = ["linkedin.com", "gmail.com", "youtube.com"]
         self.completion_model.setStringList(suggestions)
 
 app = QApplication([])
