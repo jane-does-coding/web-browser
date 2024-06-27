@@ -42,15 +42,37 @@ class BookmarkItemWidget(QWidget):
         layout.setContentsMargins(0, 5, 0, 5)  # Add spacing between items
         self.setLayout(layout)
 
+    def get_text(self):
+        return self.label.text()
+
 class MyWebBrowser():
     def __init__(self):
         self.window = QWidget()
         self.window.setWindowTitle("Woah My Web Browser")
         self.window.setStyleSheet("background-color: #171717;")
 
-        self.layout = QVBoxLayout()
-        self.horizontal = QHBoxLayout()
+        self.main_layout = QHBoxLayout(self.window)
 
+        # Left side layout for bookmarks
+        self.bookmarks_layout = QVBoxLayout()
+        self.bookmarks_list = QListWidget()
+        self.bookmarks_list.setMinimumWidth(200)
+        self.bookmarks_list.setMaximumWidth(200)
+        self.bookmarks_list.setItemDelegate(BookmarkDelegate(self.bookmarks_list))
+        self.bookmarks_list.setStyleSheet("""
+            QListWidget {
+                background-color: #0a0a0a;
+                color: white;
+                font-size: 16px;
+                border: 1px solid #0a0a0a;
+                border-radius: 10px;
+                padding: 10px;
+            }
+        """)
+        self.bookmarks_layout.addWidget(self.bookmarks_list)
+
+        # Right side layout for browser and controls
+        self.browser_layout = QVBoxLayout()
         self.url_bar = QLineEdit()
         self.url_bar.setMaximumHeight(30)
         self.url_bar.setStyleSheet("""
@@ -63,170 +85,73 @@ class MyWebBrowser():
                 padding: 5px;
             }
         """)
-
-        self.completer = QCompleter()
-        self.completion_model = QStringListModel()
-        self.completer.setModel(self.completion_model)
-        self.url_bar.setCompleter(self.completer)
-
-        self.go_btn = QPushButton("Go")
-        self.go_btn.setMinimumHeight(30)
-        self.go_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #27272a;
-                color: white;
-                font-size: 16px;
-                border: none;
-                border-radius: 5px;
-                padding: 5px;
-            }
-            QPushButton:hover {
-                background-color: #404040;
-            }
-        """)
-
-        self.back_btn = QPushButton("<")
-        self.back_btn.setMinimumHeight(30)
-        self.back_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #27272a;
-                color: white;
-                font-size: 16px;
-                border: none;
-                border-radius: 5px;
-                padding: 5px 10px;
-            }
-            QPushButton:hover {
-                background-color: #404040;
-            }
-        """)
-
-        self.forward_btn = QPushButton(">")
-        self.forward_btn.setMinimumHeight(30)
-        self.forward_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #27272a;
-                color: white;
-                font-size: 16px;
-                border: none;
-                border-radius: 5px;
-                padding: 5px 10px;
-            }
-            QPushButton:hover {
-                background-color: #404040;
-            }
-        """)
-
-        self.bookmark_btn = QPushButton("Bookmark")
-        self.bookmark_btn.setMinimumHeight(30)
-        self.bookmark_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #27272a;
-                color: white;
-                font-size: 16px;
-                border: none;
-                border-radius: 5px;
-                padding: 5px 10px;
-            }
-            QPushButton:hover {
-                background-color: #404040;
-            }
-        """)
-
-        self.remove_bookmark_btn = QPushButton("Remove Bookmark")
-        self.remove_bookmark_btn.setMinimumHeight(30)
-        self.remove_bookmark_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #27272a;
-                color: white;
-                font-size: 16px;
-                border: none;
-                border-radius: 5px;
-                padding: 5px 10px;
-            }
-            QPushButton:hover {
-                background-color: #404040;
-            }
-        """)
-
-        self.horizontal.addWidget(self.url_bar)
-        self.horizontal.addWidget(self.go_btn)
-        self.horizontal.addWidget(self.back_btn)
-        self.horizontal.addWidget(self.forward_btn)
-        self.horizontal.addWidget(self.bookmark_btn)
-        self.horizontal.addWidget(self.remove_bookmark_btn)
-
-        self.bookmarks_list = QListWidget()
-        self.bookmarks_list.setMaximumHeight(150)
-        self.bookmarks_list.setItemDelegate(BookmarkDelegate(self.bookmarks_list))
-        self.bookmarks_list.setStyleSheet("""
-            QListWidget {
-                background-color: #0a0a0a;
-                color: white;
-                font-size: 16px;
-                border: 1px solid #0a0a0a;
-                border-radius: 10px;
-                padding: 10px;
-            }
-        """)
+        self.browser_layout.addWidget(self.url_bar)
 
         self.browser = QWebEngineView()
+        self.browser_layout.addWidget(self.browser)
 
-        self.go_btn.clicked.connect(lambda: self.navigate(self.url_bar.text()))
+        # Horizontal layout for controls
+        self.controls_layout = QHBoxLayout()
+        self.back_btn = QPushButton("<")
+        self.forward_btn = QPushButton(">")
+        self.go_btn = QPushButton("Go")
+        self.bookmark_btn = QPushButton("Bookmark")
+        self.remove_bookmark_btn = QPushButton("Remove Bookmark")
+
+        self.controls_layout.addWidget(self.back_btn)
+        self.controls_layout.addWidget(self.forward_btn)
+        self.controls_layout.addWidget(self.go_btn)
+        self.controls_layout.addWidget(self.bookmark_btn)
+        self.controls_layout.addWidget(self.remove_bookmark_btn)
+
+        self.browser_layout.addLayout(self.controls_layout)
+
+        self.main_layout.addLayout(self.bookmarks_layout)
+        self.main_layout.addLayout(self.browser_layout)
+
+        self.window.resize(800, 600)
+
+        self.window.show()
+
+        # Connect signals and slots
+        self.go_btn.clicked.connect(self.navigate)
         self.back_btn.clicked.connect(self.browser.back)
         self.forward_btn.clicked.connect(self.browser.forward)
         self.bookmark_btn.clicked.connect(self.add_bookmark)
         self.remove_bookmark_btn.clicked.connect(self.remove_bookmark)
         self.bookmarks_list.itemClicked.connect(self.load_bookmark)
-
-        self.layout.addLayout(self.horizontal)
-        self.layout.addWidget(self.bookmarks_list)
-        self.layout.addWidget(self.browser)
-
-        self.browser.setUrl(QUrl("http://google.com"))
-
-        self.window.setLayout(self.layout)
-        self.window.resize(800, 600)
-        self.window.show()
+        self.url_bar.returnPressed.connect(self.navigate)
 
         self.load_bookmarks()
 
-        self.url_bar.textChanged.connect(self.update_autocomplete)
-
-    def navigate(self, url):
+    def navigate(self):
+        url = self.url_bar.text()
         if not url.startswith("http"):
             url = "http://" + url
             self.url_bar.setText(url)
         self.browser.setUrl(QUrl(url))
-        self.url_bar.clearFocus()
 
     def add_bookmark(self):
         current_url = self.browser.url().toString()
         item_widget = BookmarkItemWidget(current_url)
-        list_item = QListWidgetItem(self.bookmarks_list)
+        list_item = QListWidgetItem(current_url, self.bookmarks_list)
         list_item.setSizeHint(item_widget.sizeHint())
-
+        list_item.setData(Qt.UserRole, current_url)
         self.bookmarks_list.addItem(list_item)
         self.bookmarks_list.setItemWidget(list_item, item_widget)
         self.save_bookmarks()
 
     def load_bookmark(self, item):
-        self.browser.setUrl(QUrl(item.text()))
+        url = item.data(Qt.UserRole)
+        self.browser.setUrl(QUrl(url))
 
     def remove_bookmark(self):
-        selected_items = self.bookmarks_list.selectedItems()
-        if not selected_items:
-            return
-        for item in selected_items:
+        for item in self.bookmarks_list.selectedItems():
             self.bookmarks_list.takeItem(self.bookmarks_list.row(item))
         self.save_bookmarks()
 
     def save_bookmarks(self):
-        bookmarks = []
-        for index in range(self.bookmarks_list.count()):
-            item = self.bookmarks_list.item(index)
-            widget = self.bookmarks_list.itemWidget(item)
-            bookmarks.append(widget.label.text())
+        bookmarks = [self.bookmarks_list.item(index).data(Qt.UserRole) for index in range(self.bookmarks_list.count())]
         with open("bookmarks.json", "w") as file:
             json.dump(bookmarks, file)
 
@@ -236,16 +161,19 @@ class MyWebBrowser():
                 bookmarks = json.load(file)
                 for bookmark in bookmarks:
                     item_widget = BookmarkItemWidget(bookmark)
-                    list_item = QListWidgetItem(self.bookmarks_list)
+                    list_item = QListWidgetItem(bookmark, self.bookmarks_list)
                     list_item.setSizeHint(item_widget.sizeHint())
-
+                    list_item.setData(Qt.UserRole, bookmark)
                     self.bookmarks_list.addItem(list_item)
                     self.bookmarks_list.setItemWidget(list_item, item_widget)
 
     def update_autocomplete(self, text):
         suggestions = ["linkedin.com", "gmail.com", "youtube.com"]
-        self.completion_model.setStringList(suggestions)
+        completer = QCompleter(suggestions)
+        self.url_bar.setCompleter(completer)
 
-app = QApplication([])
-window = MyWebBrowser()
-app.exec_()
+if __name__ == "__main__":
+    import sys
+    app = QApplication(sys.argv)
+    browser = MyWebBrowser()
+    sys.exit(app.exec_())
